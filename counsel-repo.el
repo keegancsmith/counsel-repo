@@ -53,13 +53,12 @@ on your $PATH.
 INITIAL will be used as the initial input, if given."
   (interactive)
   (counsel-require-program "counsel-repo")
-  (ivy-set-prompt 'counsel-repo #'counsel-prompt-function-default)
   (let ((cands (split-string
                  (shell-command-to-string
                   (string-join (cons "counsel-repo" (mapcar #'shell-quote-argument (mapcar #'expand-file-name counsel-repo-srcpaths))) " "))
                  "\n"
                  t)))
-    (ivy-read "Find repo" cands
+    (ivy-read "Find repo: " cands
               :initial-input initial
               :history 'counsel-repo-history-input
               :action (lambda (x)
