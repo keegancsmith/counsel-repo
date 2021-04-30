@@ -83,7 +83,12 @@ func main() {
 		return repos[i].HEAD.After(repos[j].HEAD)
 	})
 
+	seen := map[string]bool{}
 	for _, repo := range repos {
+		if seen[repo.Name] {
+			continue
+		}
+		seen[repo.Name] = true
 		fmt.Println(repo.Name)
 	}
 }
