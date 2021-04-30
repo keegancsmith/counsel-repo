@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -26,6 +27,9 @@ type Repo struct {
 }
 
 func main() {
+	verbose := flag.Bool("verbose", false, "verbose output")
+	flag.Parse()
+
 	// Same calculation done by fastwalk
 	numWorkers := 4
 	if n := runtime.NumCPU(); n > numWorkers {
@@ -34,7 +38,7 @@ func main() {
 	c := make(chan Repo, numWorkers*2) // extra buffering to avoid stalling a worker
 	go func() {
 		defer close(c)
-		for _, srcpath := range os.Args[1:] {
+		for _, srcpath := range flag.Args() {
 			err := fastwalk.Walk(srcpath, func(path string, typ os.FileMode) error {
 				if typ != os.ModeDir {
 					return nil
@@ -89,6 +93,11 @@ func main() {
 			continue
 		}
 		seen[repo.Name] = true
-		fmt.Println(repo.Name)
+
+		if *verbose {
+			fmt.Printf("%s\t%s\t%v\n", repo.Name, repo.Path, time.Since(repo.HEAD))
+		} else {
+			fmt.Println(repo.Name)
+		}
 	}
 }
