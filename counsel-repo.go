@@ -39,6 +39,7 @@ func main() {
 	go func() {
 		defer close(c)
 		for _, srcpath := range flag.Args() {
+			srcpath = filepath.Clean(srcpath)
 			err := fastwalk.Walk(srcpath, func(path string, typ os.FileMode) error {
 				if typ != os.ModeDir {
 					return nil
@@ -55,6 +56,11 @@ func main() {
 				name, err := filepath.Rel(srcpath, path)
 				if err != nil {
 					return err
+				}
+
+				// Make it possible to directly list a repository
+				if name == "." {
+					name = filepath.Base(path)
 				}
 
 				var mod time.Time
