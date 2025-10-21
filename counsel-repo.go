@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/keegancsmith/counsel-repo/internal/fastwalk"
@@ -24,6 +26,32 @@ type Repo struct {
 	// repository was used. If we failed to find the modtime of HEAD, HEAD
 	// will be the zero time instant.
 	HEAD time.Time
+}
+
+func readGitFile(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	if !scanner.Scan() {
+		return "", fmt.Errorf("empty .git file")
+	}
+
+	line := scanner.Text()
+	const prefix = "gitdir: "
+	if !strings.HasPrefix(line, prefix) {
+		return "", fmt.Errorf("invalid .git file format")
+	}
+
+	gitDir := strings.TrimSpace(line[len(prefix):])
+	if !filepath.IsAbs(gitDir) {
+		gitDir = filepath.Join(filepath.Dir(path), gitDir)
+	}
+
+	return gitDir, nil
 }
 
 func main() {
@@ -49,7 +77,9 @@ func main() {
 					return filepath.SkipDir
 				}
 
-				if _, err := os.Stat(filepath.Join(path, ".git")); os.IsNotExist(err) {
+				gitPath := filepath.Join(path, ".git")
+				gitInfo, err := os.Stat(gitPath)
+				if os.IsNotExist(err) {
 					return nil
 				}
 
@@ -64,7 +94,14 @@ func main() {
 				}
 
 				var mod time.Time
-				if info, err := os.Stat(filepath.Join(path, ".git/HEAD")); err == nil {
+				gitDir := gitPath
+				if err == nil && !gitInfo.IsDir() {
+					gitDir, err = readGitFile(gitPath)
+					if err != nil {
+						gitDir = gitPath
+					}
+				}
+				if info, err := os.Stat(filepath.Join(gitDir, "HEAD")); err == nil {
 					mod = info.ModTime()
 				}
 
