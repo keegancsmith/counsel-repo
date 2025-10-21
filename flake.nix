@@ -2,7 +2,7 @@
   description = "Quickly find repositories";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-22.11";
+    nixpkgs.url = "nixpkgs/nixos-25.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -16,7 +16,7 @@
           counsel-repo = pkgs.buildGoModule {
             name = "counsel-repo";
             src = ./.;
-            vendorSha256 = "sha256-pQpattmS9VmO3ZIQUFn66az8GSmB4IvYhTTCFn6SUmo=";
+            vendorHash = null;
           };
           default = counsel-repo;
         };
